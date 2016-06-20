@@ -1,8 +1,26 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+#define ONE_WIRE_BUS 4
+
 // Data wire is plugged into port 2 on the Arduino
-#define ONE_WIRE_BUS 2
+#include <SPI.h>
+#include <MySensor.h>  
+#include <DHT.h>  
+
+#define CHILD_ID_HUM 0
+#define CHILD_ID_TEMP 1
+#define HUMIDITY_SENSOR_DIGITAL_PIN 3
+
+unsigned long SLEEP_TIME = 30000; // Sleep time between reads (in milliseconds)
+
+MySensor gw;
+DHT dht;
+float lastTemp;
+float lastHum;
+boolean metric = true; 
+MyMessage msgHum(CHILD_ID_HUM, V_HUM);
+MyMessage msgTemp(CHILD_ID_TEMP, V_TEMP);
 
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
@@ -30,139 +48,48 @@ float tempC;
 
 void setup(void)
 {
-  // start serial port
   Serial.begin(9600);
-  //Serial.println("Dallas Temperature IC Control Library Demo");
 
-  // locate devices on the bus
-  //Serial.print("Locating devices...");
-  sensors.begin();
-  //Serial.print("Found ");
-  //Serial.print(sensors.getDeviceCount(), DEC);
-  //Serial.println(" devices.");
+  gw.begin();
+  dht.setup(HUMIDITY_SENSOR_DIGITAL_PIN); 
 
-  // report parasite power requirements
-  //Serial.print("Parasite power is: "); 
-  //if (sensors.isParasitePowerMode()) Serial.println("ON");
-  //else Serial.println("OFF");
+  // Send the Sketch Version Information to the Gateway
+  gw.sendSketchInfo("Humidity", "1.0");
+
+  // Register all sensors to gw (they will be created as child devices)
+  gw.present(CHILD_ID_HUM, S_HUM);
+  gw.present(CHILD_ID_TEMP, S_TEMP);
   
-  // assign address manually.  the addresses below will beed to be changed
-  // to valid device addresses on your bus.  device address can be retrieved
-  // by using either oneWire.search(deviceAddress) or individually via
-  // sensors.getAddress(deviceAddress, index)
-  //insideThermometer = { 0x28, 0x1D, 0x39, 0x31, 0x2, 0x0, 0x0, 0xF0 };
-
-  // Method 1:
-  // search for devices on the bus and assign based on an index.  ideally,
-  // you would do this to initially discover addresses on the bus and then 
-  // use those addresses and manually assign them (see above) once you know 
-  // the devices on your bus (and assuming they don't change).
-  if (!sensors.getAddress(insideThermometer, 0)) Serial.println("Unable to find address for Device 0"); 
-  
-  // method 2: search()
-  // search() looks for the next device. Returns 1 if a new address has been
-  // returned. A zero might mean that the bus is shorted, there are no devices, 
-  // or you have already retrieved all of them.  It might be a good idea to 
-  // check the CRC to make sure you didn't get garbage.  The order is 
-  // deterministic. You will always get the same devices in the same order
-  //
-  // Must be called before search()
-  //oneWire.reset_search();
-  // assigns the first address found to insideThermometer
-  //if (!oneWire.search(insideThermometer)) Serial.println("Unable to find address for insideThermometer");
-
-  // show the addresses we found on the bus
-  //Serial.print("Device 0 Address: ");
-  //printAddress(insideThermometer);
-  //Serial.println();
-
-  // set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
-  sensors.setResolution(insideThermometer, 12);
- 
-  //Serial.print("Device 0 Resolution: ");
-  //Serial.print(sensors.getResolution(insideThermometer), DEC); 
-  //Serial.println();
-}
-
-// function to print the temperature for a device
-void printTemperature(DeviceAddress deviceAddress)
-{
-  // method 1 - slower
-  //Serial.print("Temp C: ");
-  //Serial.print(sensors.getTempC(deviceAddress));
-  //Serial.print(" Temp F: ");
-  //Serial.print(sensors.getTempF(deviceAddress)); // Makes a second call to getTempC and then converts to Fahrenheit
-
-  // method 2 - faster
-  tempC = sensors.getTempC(deviceAddress);
-  //Serial.print("Temp C: ");
-  //Serial.print(tempC);
-  //Serial.print(" Temp F: ");
-  Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
+  metric = gw.getConfig().isMetric;
 }
 
 void loop(void)
 { 
-  // call sensors.requestTemperatures() to issue a global temperature 
-  // request to all devices on the bus
-  //Serial.print("Requesting temperatures...");
-  sensors.requestTemperatures(); // Send the command to get temperatures
-  //Serial.println("DONE");
+  delay(dht.getMinimumSamplingPeriod());
+
+  float temperature = dht.getTemperature();
+  if (isnan(temperature)) {
+      Serial.println("Failed reading temperature from DHT");
+  } else if (temperature != lastTemp) {
+    lastTemp = temperature;
+    if (!metric) {
+      temperature = dht.toFahrenheit(temperature);
+    }
+    gw.send(msgTemp.set(temperature, 1));
+    Serial.print("T: ");
+    Serial.println(temperature);
+  }
   
-  // It responds almost immediately. Let's print out the data
-  printTemperature(insideThermometer);// Use a simple function to print out the data
-  int tempF = 100 * DallasTemperature::toFahrenheit(tempC);
-  if(tempF > 9976){
-    heaterOn = 0;
-    digitalWrite(heaterPin, HIGH);
+  float humidity = dht.getHumidity();
+  if (isnan(humidity)) {
+      Serial.println("Failed reading humidity from DHT");
+  } else if (humidity != lastHum) {
+      lastHum = humidity;
+      gw.send(msgHum.set(humidity, 1));
+      Serial.print("H: ");
+      Serial.println(humidity);
   }
-  if( tempF > 10){
-    if( tempF < 9962){
-      heaterOn = 1;
-      //digitalWrite(heaterPin, LOW);
-    }
-  }
-    unsigned long currentMillis = millis();
-  if (heaterOn){
-  if (currentMillis - previousMillis >= interval + nudge) {
-    // save the last time you blinked the LED
-    //previousMillis = currentMillis;
-    nudge = 0;
 
-    // if the LED is off turn it on and vice-versa:
-    if (heaterState) {
-      previousMillis = currentMillis;
-      heaterState = LOW;
-      nudge = 0;
-      if(tempF < 9750){
-      nudge = 5000;
-      }
-      if(tempF < 9850){
-      nudge = 1000;
-      }
-    } else {
-      previousMillis = currentMillis; //add 5 seconds of off time
-      heaterState = HIGH;
-      nudge = 25000;
-      if(tempF > 9960){
-        nudge = 35000;
-      }
-      
-    }
-
-    // set the LED with the ledState of the variable:
-    digitalWrite(heaterPin, heaterState);
-  }
-  }
-  delay(750);
+  gw.sleep(SLEEP_TIME); //sleep a bit
 }
 
-// function to print a device address
-void printAddress(DeviceAddress deviceAddress)
-{
-  for (uint8_t i = 0; i < 8; i++)
-  {
-    if (deviceAddress[i] < 16) Serial.print("0");
-    Serial.print(deviceAddress[i], HEX);
-  }
-}
