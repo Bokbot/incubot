@@ -102,13 +102,12 @@ void printTemperature(DeviceAddress deviceAddress)
 }
 
 void loop(void)
-{ 
+{
   // call sensors.requestTemperatures() to issue a global temperature 
   // request to all devices on the bus
   //Serial.print("Requesting temperatures...");
   sensors.requestTemperatures(); // Send the command to get temperatures
   //Serial.println("DONE");
-  
   // It responds almost immediately. Let's print out the data
   printTemperature(insideThermometer);// Use a simple function to print out the data
   int tempF = 100 * DallasTemperature::toFahrenheit(tempC);
@@ -147,7 +146,6 @@ void loop(void)
       if(tempF > 9960){
         nudge = 25000 + 100 * (tempF - 9960);
       }
-      
     }
 
     // set the LED with the ledState of the variable:
