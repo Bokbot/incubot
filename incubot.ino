@@ -27,14 +27,18 @@ double MySetPoint = 100.50;
 double Setpoint, Input, Output;
 
 //Specify the links and initial tuning parameters
-PID myPID(&Input, &Output, &Setpoint,2,5,1, DIRECT);
+double Kp=2, Ki=5, Kd=1;
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+int WindowSize = 15000;
+unsigned long windowStartTime;
 
 unsigned long previousMillis = 0;        // will store last time LED was updated
 unsigned long nudge = 0;
 unsigned long yank = 0;
 
 // constants won't change :
-const long interval = 12249;  
+const long interval = WindowSize;  
 
 float tempC;
 
@@ -55,12 +59,17 @@ void setup(void)
   //Serial.print("Parasite power is: "); 
   //if (sensors.isParasitePowerMode()) Serial.println("ON");
 
+  windowStartTime = millis();
+
+  //initialize the variables we're linked to
   Setpoint = MySetPoint;
-  //else Serial.println("OFF");
-   myPID.SetOutputLimits(0, 25000);
-   //turn the PID on
-   myPID.SetMode(AUTOMATIC);
-  
+
+  //tell the PID to range between 0 and the full window size
+  myPID.SetOutputLimits(0, WindowSize);
+
+  //turn the PID on
+  myPID.SetMode(AUTOMATIC);
+
   // assign address manually.  the addresses below will beed to be changed
   // to valid device addresses on your bus.  device address can be retrieved
   // by using either oneWire.search(deviceAddress) or individually via
@@ -156,35 +165,21 @@ void loop(void)
   }
     unsigned long currentMillis = millis();
   if (heaterOn){
-  if (currentMillis - previousMillis >= interval + nudge) {
-    // save the last time you blinked the LED
-    //previousMillis = currentMillis;
-    nudge = 0;
 
-    // if the LED is off turn it on and vice-versa:
-    if (heaterState) {
-      previousMillis = currentMillis;
-      heaterState = LOW;
-      nudge = 0;
-      if(Input < MySetPoint){
-      //nudge = 2000 + 400 * (MySetPoint - tempF);
-        nudge = Output;
-      }
-    } else {
-      previousMillis = currentMillis; //add 5 seconds of off time
-      heaterState = HIGH;
-      nudge = 25000;
-      if(Input < MyMaxPoint){
-        //nudge = 25000 - (Output * 300);
-        nudge = 25000 - Output;
-      }
-    }
 
-    // set the LED with the ledState of the variable:
-    digitalWrite(heaterPin, heaterState);
+   /************************************************
+   * turn the output pin on/off based on pid output
+   ************************************************/
+  if (millis() - windowStartTime > WindowSize)
+  { //time to shift the Relay Window
+    windowStartTime += WindowSize;
   }
+  if (Output < millis() - windowStartTime) digitalWrite(heaterPin, LOW);
+  else digitalWrite(heaterPin, HIGH);
+
+
   }
-  delay(750);
+  delay(250);
 }
 
 // function to print a device address
