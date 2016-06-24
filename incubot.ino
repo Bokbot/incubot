@@ -19,6 +19,7 @@ const int heaterPin =  13;      // the number of the LED pin
 // Variables will change :
 int heaterState = LOW;  
 int heaterOn = 0;
+unsigned long MySetPoint = 10050;
 
 unsigned long previousMillis = 0;        // will store last time LED was updated
 unsigned long nudge = 0;
@@ -98,6 +99,11 @@ void printTemperature(DeviceAddress deviceAddress)
   //Serial.print("Temp C: ");
   //Serial.print(tempC);
   //Serial.print(" Temp F: ");
+  Serial.print("nudge");
+  Serial.print(nudge);
+  Serial.print(" countdown  ");
+  Serial.print( interval + nudge - (millis() - previousMillis));
+  Serial.print(" Temp F: ");
   Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
 }
 
@@ -111,12 +117,12 @@ void loop(void)
   // It responds almost immediately. Let's print out the data
   printTemperature(insideThermometer);// Use a simple function to print out the data
   int tempF = 100 * DallasTemperature::toFahrenheit(tempC);
-  if(tempF > 9976){
+  if(tempF > 10076){
     heaterOn = 0;
     digitalWrite(heaterPin, HIGH);
   }
   if( tempF > 10){
-    if( tempF < 9962){
+    if( tempF < 9996){
       heaterOn = 1;
       //digitalWrite(heaterPin, LOW);
     }
@@ -133,18 +139,15 @@ void loop(void)
       previousMillis = currentMillis;
       heaterState = LOW;
       nudge = 0;
-      if(tempF < 9850){
-      nudge = 2000 + 10 * (1000 - tempF);
-      }
-      if(tempF < 9850){
-      nudge = 1000;
+      if(tempF < MySetPoint){
+      nudge = 2000 + 400 * (MySetPoint - tempF);
       }
     } else {
       previousMillis = currentMillis; //add 5 seconds of off time
       heaterState = HIGH;
       nudge = 25000;
-      if(tempF > 9960){
-        nudge = 25000 + 100 * (tempF - 9960);
+      if(tempF > MySetPoint){
+        nudge = 25000 + 400 * (tempF - MySetPoint);
       }
     }
 
