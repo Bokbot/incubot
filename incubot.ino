@@ -20,17 +20,20 @@ const int heaterPin =  13;      // the number of the LED pin
 // Variables will change :
 int heaterState = LOW;  
 int heaterOn = 0;
-double MyMaxPoint = 101.01;
-double MySetPoint = 100.50;
+
+double MyMaxPoint = 101.00;
+double MySetPoint = 100.30;
+double MyMinPoint = 99.65;
 
 //Define Variables we'll be connecting to
-double Setpoint, Input, Output;
+double Setpoint, Input;
+double Output = 1000;
 
 //Specify the links and initial tuning parameters
-double Kp=2, Ki=5, Kd=1;
+double Kp=4, Ki=9, Kd=5;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-int WindowSize = 15000;
+unsigned long WindowSize = 60000;
 unsigned long windowStartTime;
 
 unsigned long previousMillis = 0;        // will store last time LED was updated
@@ -128,6 +131,8 @@ void printTemperature(DeviceAddress deviceAddress)
   Serial.print(heaterOn);
   Serial.print(" MySetPoint ");
   Serial.print(MySetPoint);
+  Serial.print(" MyMinPoint ");
+  Serial.print(MyMinPoint);
   Serial.print(" Input ");
   Serial.print(Input);
   Serial.print(" Output ");
@@ -135,7 +140,7 @@ void printTemperature(DeviceAddress deviceAddress)
   Serial.print(" nudge ");
   Serial.print(nudge);
   Serial.print(" countdown  ");
-  Serial.print( interval + nudge - (millis() - previousMillis));
+  Serial.print( millis() - windowStartTime - Output );
   Serial.print(" Temp F: ");
   Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
 }
@@ -162,6 +167,11 @@ void loop(void)
       heaterOn = 1;
       //digitalWrite(heaterPin, LOW);
     }
+    if( Input < MyMinPoint){
+      heaterOn = 0;
+      heaterState = 1;
+      digitalWrite(heaterPin, LOW);
+    }
   }
     unsigned long currentMillis = millis();
   if (heaterOn){
@@ -184,7 +194,7 @@ void loop(void)
   }
 
   }
-  delay(250);
+  delay(1000);
 }
 
 // function to print a device address
