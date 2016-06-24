@@ -174,9 +174,14 @@ void loop(void)
   { //time to shift the Relay Window
     windowStartTime += WindowSize;
   }
-  if (Output < millis() - windowStartTime) digitalWrite(heaterPin, LOW);
-  else digitalWrite(heaterPin, HIGH);
-
+  if (Output < millis() - windowStartTime) {
+    digitalWrite(heaterPin, LOW);
+    heaterState = 1;
+  }
+  else {
+    digitalWrite(heaterPin, HIGH);
+    heaterState = 0;
+  }
 
   }
   delay(250);
