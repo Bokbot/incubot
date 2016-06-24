@@ -1,5 +1,5 @@
 # Arduino Make file. Refer to https://github.com/sudar/Arduino-Makefile
-BOARD_TAG   = nano
+BOARD_TAG   = uno
 BOARD_SUB   = atmega328
 #include /usr/share/arduino/Arduino.mk
 include /home/thoth/git/Arduino-Makefile/Arduino.mk
@@ -9,7 +9,8 @@ include /home/thoth/git/Arduino-Makefile/Arduino.mk
 # ARDUINO_LIBS = Average Arduino-PID-Library Adafruit_GFX_Library Adafruit_ST7735_Library SPI Wire Time
 # ARDUINO_LIBS = Average Adafruit_GFX Arduino-PID-Library SPI Wire Time Adafruit_SSD1306
 ARDUINO_LIBS = Average  Arduino-PID-Library SPI Wire Time
-MONITOR_PORT = /dev/ttyACM1
+MONITOR_PORT = /dev/ttyACM0
+ISP_PORT = /dev/ttyACM0
 MONITOR_BAUDRATE  = 115200
 #BOARD_TAG    = mega
 #BOARD_SUB    = atmega2560

@@ -112,7 +112,13 @@ void printTemperature(DeviceAddress deviceAddress)
   //Serial.print("Temp C: ");
   //Serial.print(tempC);
   //Serial.print(" Temp F: ");
-  Serial.print("nudge");
+  Serial.print("heaterState ");
+  Serial.print(heaterState);
+  Serial.print(" heaterOn ");
+  Serial.print(heaterOn);
+  Serial.print(" Output ");
+  Serial.print(Output);
+  Serial.print(" nudge ");
   Serial.print(nudge);
   Serial.print(" countdown  ");
   Serial.print( interval + nudge - (millis() - previousMillis));
