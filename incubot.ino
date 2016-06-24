@@ -134,8 +134,8 @@ void loop(void)
       previousMillis = currentMillis;
       heaterState = LOW;
       nudge = 0;
-      if(tempF < 9750){
-      nudge = 5000;
+      if(tempF < 9850){
+      nudge = 2000 + 10 * (1000 - tempF);
       }
       if(tempF < 9850){
       nudge = 1000;
@@ -145,7 +145,7 @@ void loop(void)
       heaterState = HIGH;
       nudge = 25000;
       if(tempF > 9960){
-        nudge = 35000;
+        nudge = 25000 + 100 * (tempF - 9960);
       }
       
     }
