@@ -20,8 +20,8 @@ const int heaterPin =  13;      // the number of the LED pin
 // Variables will change :
 int heaterState = LOW;  
 int heaterOn = 0;
-unsigned long MySetPoint = 10080;
-unsigned long MySetPoint = 10050;
+double MyMaxPoint = 101.01;
+double MySetPoint = 100.50;
 
 //Define Variables we'll be connecting to
 double Setpoint, Input, Output;
@@ -117,6 +117,8 @@ void printTemperature(DeviceAddress deviceAddress)
   Serial.print(heaterState);
   Serial.print(" heaterOn ");
   Serial.print(heaterOn);
+  Serial.print(" MySetPoint ");
+  Serial.print(MySetPoint);
   Serial.print(" Input ");
   Serial.print(Input);
   Serial.print(" Output ");
@@ -138,14 +140,16 @@ void loop(void)
   //Serial.println("DONE");
   // It responds almost immediately. Let's print out the data
   printTemperature(insideThermometer);// Use a simple function to print out the data
-  int tempF = 100 * DallasTemperature::toFahrenheit(tempC);
-  if(tempF > MyMaxPoint){
+  float tempF = DallasTemperature::toFahrenheit(tempC);
+  Input = tempF;
+  myPID.Compute();
+  if(Input > MyMaxPoint){
     heaterOn = 0;
     digitalWrite(heaterPin, HIGH);
   }
   // ignore negative
-  if( tempF > 0){
-    if( tempF < MySetPoint){
+  if( Input > 0){
+    if( Input < MySetPoint){
       heaterOn = 1;
       //digitalWrite(heaterPin, LOW);
     }
@@ -157,14 +161,12 @@ void loop(void)
     //previousMillis = currentMillis;
     nudge = 0;
 
-    Input = tempF;
-    myPID.Compute();
     // if the LED is off turn it on and vice-versa:
     if (heaterState) {
       previousMillis = currentMillis;
       heaterState = LOW;
       nudge = 0;
-      if(tempF < MySetPoint){
+      if(Input < MySetPoint){
       //nudge = 2000 + 400 * (MySetPoint - tempF);
         nudge = Output;
       }
@@ -172,12 +174,9 @@ void loop(void)
       previousMillis = currentMillis; //add 5 seconds of off time
       heaterState = HIGH;
       nudge = 25000;
-      if(tempF > MySetPoint){
-        //nudge = 25000 + 400 * (tempF - MySetPoint);
-        nudge = 45000 - Output;
-      }
-      if(tempF < MySetPoint){
-        nudge = 35000 - Output;
+      if(Input < MyMaxPoint){
+        //nudge = 25000 - (Output * 300);
+        nudge = 25000 - Output;
       }
     }
 
