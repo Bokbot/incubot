@@ -1,4 +1,5 @@
 #include <OneWire.h>
+#include <PID_v1.h>
 #include <DallasTemperature.h>
 
 // Data wire is plugged into port 2 on the Arduino
@@ -21,8 +22,15 @@ int heaterState = LOW;
 int heaterOn = 0;
 unsigned long MySetPoint = 10050;
 
+//Define Variables we'll be connecting to
+double Setpoint, Input, Output;
+
+//Specify the links and initial tuning parameters
+PID myPID(&Input, &Output, &Setpoint,2,5,1, DIRECT);
+
 unsigned long previousMillis = 0;        // will store last time LED was updated
 unsigned long nudge = 0;
+unsigned long yank = 0;
 
 // constants won't change :
 const long interval = 12249;  
@@ -45,7 +53,12 @@ void setup(void)
   // report parasite power requirements
   //Serial.print("Parasite power is: "); 
   //if (sensors.isParasitePowerMode()) Serial.println("ON");
+
+  Setpoint = MySetPoint;
   //else Serial.println("OFF");
+   myPID.SetOutputLimits(0, 25000);
+   //turn the PID on
+   myPID.SetMode(AUTOMATIC);
   
   // assign address manually.  the addresses below will beed to be changed
   // to valid device addresses on your bus.  device address can be retrieved
@@ -134,20 +147,27 @@ void loop(void)
     //previousMillis = currentMillis;
     nudge = 0;
 
+    Input = tempF;
+    myPID.Compute();
     // if the LED is off turn it on and vice-versa:
     if (heaterState) {
       previousMillis = currentMillis;
       heaterState = LOW;
       nudge = 0;
       if(tempF < MySetPoint){
-      nudge = 2000 + 400 * (MySetPoint - tempF);
+      //nudge = 2000 + 400 * (MySetPoint - tempF);
+        nudge = Output;
       }
     } else {
       previousMillis = currentMillis; //add 5 seconds of off time
       heaterState = HIGH;
       nudge = 25000;
       if(tempF > MySetPoint){
-        nudge = 25000 + 400 * (tempF - MySetPoint);
+        //nudge = 25000 + 400 * (tempF - MySetPoint);
+        nudge = 45000 - Output;
+      }
+      if(tempF < MySetPoint){
+        nudge = 35000 - Output;
       }
     }
 
