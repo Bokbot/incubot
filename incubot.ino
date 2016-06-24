@@ -20,6 +20,7 @@ const int heaterPin =  13;      // the number of the LED pin
 // Variables will change :
 int heaterState = LOW;  
 int heaterOn = 0;
+unsigned long MySetPoint = 10080;
 unsigned long MySetPoint = 10050;
 
 //Define Variables we'll be connecting to
@@ -116,6 +117,8 @@ void printTemperature(DeviceAddress deviceAddress)
   Serial.print(heaterState);
   Serial.print(" heaterOn ");
   Serial.print(heaterOn);
+  Serial.print(" Input ");
+  Serial.print(Input);
   Serial.print(" Output ");
   Serial.print(Output);
   Serial.print(" nudge ");
@@ -136,12 +139,13 @@ void loop(void)
   // It responds almost immediately. Let's print out the data
   printTemperature(insideThermometer);// Use a simple function to print out the data
   int tempF = 100 * DallasTemperature::toFahrenheit(tempC);
-  if(tempF > 10076){
+  if(tempF > MyMaxPoint){
     heaterOn = 0;
     digitalWrite(heaterPin, HIGH);
   }
-  if( tempF > 10){
-    if( tempF < 9996){
+  // ignore negative
+  if( tempF > 0){
+    if( tempF < MySetPoint){
       heaterOn = 1;
       //digitalWrite(heaterPin, LOW);
     }
