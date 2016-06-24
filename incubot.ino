@@ -175,12 +175,12 @@ void loop(void)
     windowStartTime += WindowSize;
   }
   if (Output < millis() - windowStartTime) {
-    digitalWrite(heaterPin, LOW);
-    heaterState = 1;
-  }
-  else {
     digitalWrite(heaterPin, HIGH);
     heaterState = 0;
+  }
+  else {
+    digitalWrite(heaterPin, LOW);
+    heaterState = 1;
   }
 
   }
