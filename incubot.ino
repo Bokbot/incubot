@@ -33,7 +33,7 @@ double Output = 1000;
 double Kp=4, Ki=9, Kd=5;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-unsigned long WindowSize = 60000;
+unsigned long WindowSize = 20000;
 unsigned long windowStartTime;
 
 unsigned long previousMillis = 0;        // will store last time LED was updated
@@ -125,18 +125,24 @@ void printTemperature(DeviceAddress deviceAddress)
   //Serial.print("Temp C: ");
   //Serial.print(tempC);
   //Serial.print(" Temp F: ");
-  Serial.print("heaterState ");
+  Serial.print("hState ");
   Serial.print(heaterState);
-  Serial.print(" heaterOn ");
+  Serial.print(" hOn ");
   Serial.print(heaterOn);
-  Serial.print(" MySetPoint ");
+  Serial.print(" Set ");
   Serial.print(MySetPoint);
-  Serial.print(" MyMinPoint ");
+  Serial.print(" Min ");
   Serial.print(MyMinPoint);
-  Serial.print(" Input ");
+  Serial.print(" In ");
   Serial.print(Input);
-  Serial.print(" Output ");
+  Serial.print(" Out ");
   Serial.print(Output);
+  Serial.print(" / ");
+  Serial.print(WindowSize);
+  Serial.print(" = ");
+  float outpercent = 100 * (Output / WindowSize);
+  Serial.print(outpercent);
+  Serial.print("% ");
   Serial.print(" nudge ");
   Serial.print(nudge);
   Serial.print(" countdown  ");
