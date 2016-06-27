@@ -2,13 +2,16 @@
 BOARD_TAG   = uno
 BOARD_SUB   = atmega328
 #include /usr/share/arduino/Arduino.mk
-include /home/thoth/git/Arduino-Makefile/Arduino.mk
+ARDUINO_DIR = /usr/local/arduino/
+ARDMK_DIR =  /home/thoth/git/Arduino-Makefile
+ARDUINO_PLATFORM_LIB_PATH = /usr/local/arduino/hardware/arduino/avr/libraries
+AVR_TOOLS_DIR = /usr/local/arduino/hardware/tools/avr
 
 
 #include ../../Arduino.mk
 # ARDUINO_LIBS = Average Arduino-PID-Library Adafruit_GFX_Library Adafruit_ST7735_Library SPI Wire Time
 # ARDUINO_LIBS = Average Adafruit_GFX Arduino-PID-Library SPI Wire Time Adafruit_SSD1306
-ARDUINO_LIBS = Average  Arduino-PID-Library SPI Wire Time MySensors
+ARDUINO_LIBS = SPI Wire Time MySensors OneWire PID_v1 DallasTemperature DHT
 MONITOR_PORT = /dev/ttyACM0
 ISP_PORT = /dev/ttyACM0
 MONITOR_BAUDRATE  = 115200
@@ -144,3 +147,4 @@ MONITOR_BAUDRATE  = 115200
 #AVRDUDE_OPTS = -v
 #BOARDS_TXT   = $(HOME)/arduino/hardware/breadboard/boards.txt
 #include /usr/share/arduino/Arduino.mk
+include /home/thoth/git/Arduino-Makefile/Arduino.mk
