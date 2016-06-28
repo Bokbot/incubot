@@ -18,7 +18,7 @@
 #define ONE_WIRE_BUS 3
 #define HUMIDITY_SENSOR_DIGITAL_PIN 2
 // constants won't change. Used here to set a pin number :
-const int heaterPin =  13;      // the number of the LED pin
+const int heaterPin =  5;      // the number of the heater pin
 
 #define CHILD_ID_HUM   0
 #define CHILD_ID_TEMP  1
