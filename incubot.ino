@@ -18,7 +18,7 @@
 #define ONE_WIRE_BUS 3
 #define HUMIDITY_SENSOR_DIGITAL_PIN 2
 // constants won't change. Used here to set a pin number :
-const int heaterPin =  5;      // the number of the heater pin
+#define HEATER_PIN 5
 
 #define CHILD_ID_HUM   0
 #define CHILD_ID_TEMP  1
@@ -102,6 +102,7 @@ bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
 void setup(void)
 {
   dht.setup(HUMIDITY_SENSOR_DIGITAL_PIN);
+  pinMode(HEATER_PIN, OUTPUT);
 
   metric = getConfig().isMetric;
   // start serial port
@@ -236,18 +237,18 @@ void loop(void)
   outpercent = 100 * (Output / WindowSize);
   if(Input > MyMaxPoint){
     heaterOn = 0;
-    digitalWrite(heaterPin, HIGH);
+    digitalWrite(HEATER_PIN, HIGH);
   }
   // ignore negative
   if( Input > 0){
     if( Input < MySetPoint){
       heaterOn = 1;
-      //digitalWrite(heaterPin, LOW);
+      //digitalWrite(HEATER_PIN, LOW);
     }
     if( Input < MyMinPoint){
       heaterOn = 0;
       heaterState = 1;
-      digitalWrite(heaterPin, LOW);
+      digitalWrite(HEATER_PIN, LOW);
     }
   }
     unsigned long currentMillis = millis();
@@ -262,11 +263,11 @@ void loop(void)
     windowStartTime += WindowSize;
   }
   if (Output < millis() - windowStartTime) {
-    digitalWrite(heaterPin, HIGH);
+    digitalWrite(HEATER_PIN, HIGH);
     heaterState = 0;
   }
   else {
-    digitalWrite(heaterPin, LOW);
+    digitalWrite(HEATER_PIN, LOW);
     heaterState = 1;
   }
 
