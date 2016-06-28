@@ -10,24 +10,39 @@
 #include <DallasTemperature.h>
 
 #include <SPI.h>
-#include <MySensors.h>  
-#include <DHT.h>  
+#include <MySensors.h>
+#include <DHT.h>
 
-#define CHILD_ID_HUM 0
-#define CHILD_ID_TEMP 1
-#define HUMIDITY_SENSOR_DIGITAL_PIN 3
+// Define Pins here
+// Data wire is plugged into port 2 on the Arduino
+#define ONE_WIRE_BUS 3
+#define HUMIDITY_SENSOR_DIGITAL_PIN 2
+// constants won't change. Used here to set a pin number :
+const int heaterPin =  13;      // the number of the LED pin
 
+#define CHILD_ID_HUM   0
+#define CHILD_ID_TEMP  1
+#define CHILD_ID_TEMP2 2
+#define CHILD_ID_TEMP3 3
+#define CHILD_ID_HVAC  53
+
+// You might need to tune these for your setup
 unsigned long SLEEP_TIME = 1000; // Sleep time between reads (in milliseconds)
+const int sensorwatchdogLimit = 20;
+const int sensorInterval = 5000; // 5,000 ms = 5 seconds
+unsigned long WindowSize = 20000;
 
 DHT dht;
 float lastTemp;
+float lastTempF;
 float lastHum;
 boolean metric = true; 
 MyMessage msgHum(CHILD_ID_HUM, V_HUM);
 MyMessage msgTemp(CHILD_ID_TEMP, V_TEMP);
-
-// Data wire is plugged into port 2 on the Arduino
-#define ONE_WIRE_BUS 2
+MyMessage msgTemp2(CHILD_ID_TEMP2, V_TEMP);
+MyMessage msgTemp3(CHILD_ID_TEMP3, V_TEMP);
+// hvac for incubot needs work still
+//MyMessage msgHVAC(CHILD_ID_HVAC, V_TEMP);
 
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);
@@ -38,11 +53,8 @@ DallasTemperature sensors(&oneWire);
 // arrays to hold device address
 DeviceAddress insideThermometer;
 
-// constants won't change. Used here to set a pin number :
-const int heaterPin =  13;      // the number of the LED pin
-
 // Variables will change :
-int heaterState = LOW;  
+int heaterState = LOW;
 int heaterOn = 0;
 
 double MyMaxPoint = 101.00;
@@ -57,26 +69,42 @@ double Output = 1000;
 double Kp=100, Ki=500, Kd=200;
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-unsigned long WindowSize = 20000;
 unsigned long windowStartTime;
 
 unsigned long previousMillis = 0;        // will store last time LED was updated
 unsigned long nudge = 0;
 unsigned long yank = 0;
 
-// constants won't change :
-const long interval = WindowSize;  
 
 float tempC;
 
+unsigned long sensorthrottle = 1000;
+int sensorwatchdog = 0;
+
+bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
+
+  if( millis() > throttle ) {
+    // return one or 'ok'
+    return 1;
+  }
+  else if( dog > watchdogLimit ){
+    // return one or 'ok'
+    return 1;
+  }
+  else{
+    return 0;
+  }
+}
+
+
 void setup(void)
 {
-  dht.setup(HUMIDITY_SENSOR_DIGITAL_PIN); 
+  dht.setup(HUMIDITY_SENSOR_DIGITAL_PIN);
 
   metric = getConfig().isMetric;
   // start serial port
   Serial.begin(115200);
-  //Serial.println("Dallas Temperature IC Control Library Demo");
+  Serial.println("Dallas Temperature IC Control Library Demo");
 
   // locate devices on the bus
   //Serial.print("Locating devices...");
@@ -138,14 +166,17 @@ void setup(void)
   //Serial.println();
 }
 
-void presentation()  
-{ 
+void presentation()
+{
   // Send the Sketch Version Information to the Gateway
-  sendSketchInfo("Humidity", "1.0");
+  sendSketchInfo("Incubot", "0.1");
 
   // Register all sensors to gw (they will be created as child devices)
   present(CHILD_ID_HUM, S_HUM);
   present(CHILD_ID_TEMP, S_TEMP);
+  present(CHILD_ID_TEMP2, S_TEMP);
+  present(CHILD_ID_TEMP3, S_TEMP);
+  present(CHILD_ID_HVAC, S_HVAC);
 }
 
 // function to print the temperature for a device
@@ -190,6 +221,7 @@ void printTemperature(DeviceAddress deviceAddress)
 
 void loop(void)
 {
+
   // call sensors.requestTemperatures() to issue a global temperature 
   // request to all devices on the bus
   //Serial.print("Requesting temperatures...");
@@ -239,36 +271,59 @@ void loop(void)
   }
   delay(dht.getMinimumSamplingPeriod());
  
-  // Fetch temperatures from DHT sensor
-  float temperature = dht.getTemperature();
-  if (isnan(temperature)) {
-    //  Serial.println("Failed reading temperature from DHT");
-  } else if (temperature != lastTemp) {
-    lastTemp = temperature;
-    if (!metric) {
-      temperature = dht.toFahrenheit(temperature);
-    }
-    send(msgTemp.set(temperature, 1));
-    #ifdef MY_DEBUG
-  //  Serial.print("T: ");
-   // Serial.println(temperature);
-    #endif
+  if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit )){
+
+    sensorthrottle = (millis() + sensorInterval); 
+    sensorwatchdog = 0;
+      // Fetch temperatures from DHT sensor
+      float temperature = dht.getTemperature();
+      if (isnan(temperature)) {
+        //  Serial.println("Failed reading temperature from DHT");
+      } else if (temperature != lastTemp) {
+        lastTemp = temperature;
+        if (!metric) {
+          temperature = dht.toFahrenheit(temperature);
+        }
+        send(msgTemp.set(temperature, 1));
+        #ifdef MY_DEBUG
+      //  Serial.print("T: ");
+       // Serial.println(temperature);
+        #endif
+      }
+
+      if (isnan(tempF)) {
+        //  Serial.println("Failed reading tempF from DHT");
+      } else if (tempF != lastTempF) {
+        lastTempF = tempF;
+        if (!metric) {
+          tempF = dht.toFahrenheit(tempF);
+        }
+        send(msgTemp2.set(tempF, 1));
+        #ifdef MY_DEBUG
+      //  Serial.print("T: ");
+       // Serial.println(tempF);
+        #endif
+      }
+      
+      
+      // Fetch humidity from DHT sensor
+      float humidity = dht.getHumidity();
+      if (isnan(humidity)) {
+          Serial.println("Failed reading humidity from DHT");
+      } else if (humidity != lastHum) {
+          lastHum = humidity;
+          send(msgHum.set(humidity, 1));
+          #ifdef MY_DEBUG
+          Serial.print("H: ");
+          Serial.println(humidity);
+          #endif
+      }
   }
   
-  // Fetch humidity from DHT sensor
-  float humidity = dht.getHumidity();
-  if (isnan(humidity)) {
-      Serial.println("Failed reading humidity from DHT");
-  } else if (humidity != lastHum) {
-      lastHum = humidity;
-      send(msgHum.set(humidity, 1));
-      #ifdef MY_DEBUG
-      Serial.print("H: ");
-      Serial.println(humidity);
-      #endif
-  }
-  
-  sleep(SLEEP_TIME); //sleep a bit
+  sensorwatchdog++;
+  // sleep may not be a good idea with the relay involved
+  //sleep(SLEEP_TIME); //sleep a bit
+  delay(SLEEP_TIME); //sleep a bit
 }
 
 // function to print a device address

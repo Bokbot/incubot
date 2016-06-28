@@ -1,5 +1,6 @@
 # Arduino Make file. Refer to https://github.com/sudar/Arduino-Makefile
-BOARD_TAG   = uno
+#BOARD_TAG   = uno
+BOARD_TAG    = nano
 BOARD_SUB   = atmega328
 #include /usr/share/arduino/Arduino.mk
 ARDUINO_DIR = /usr/local/arduino/
@@ -12,8 +13,8 @@ AVR_TOOLS_DIR = /usr/local/arduino/hardware/tools/avr
 # ARDUINO_LIBS = Average Arduino-PID-Library Adafruit_GFX_Library Adafruit_ST7735_Library SPI Wire Time
 # ARDUINO_LIBS = Average Adafruit_GFX Arduino-PID-Library SPI Wire Time Adafruit_SSD1306
 ARDUINO_LIBS = SPI Wire Time MySensors OneWire PID_v1 DallasTemperature DHT
-MONITOR_PORT = /dev/ttyACM0
-ISP_PORT = /dev/ttyACM0
+#MONITOR_PORT = /dev/ttyACM0
+#ISP_PORT = /dev/ttyACM0
 MONITOR_BAUDRATE  = 115200
 #BOARD_TAG    = mega
 #BOARD_SUB    = atmega2560
