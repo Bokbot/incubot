@@ -274,7 +274,8 @@ void loop(void)
   }
   delay(dht.getMinimumSamplingPeriod());
  
-  if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit )){
+ // if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit )){
+  if(sensorwatchdog > 30){
 
     sensorthrottle = (millis() + sensorInterval); 
     sensorwatchdog = 0;
