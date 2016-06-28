@@ -31,10 +31,12 @@ unsigned long SLEEP_TIME = 1000; // Sleep time between reads (in milliseconds)
 const int sensorwatchdogLimit = 20;
 const int sensorInterval = 5000; // 5,000 ms = 5 seconds
 unsigned long WindowSize = 20000;
+float outpercent = 0;
 
 DHT dht;
 float lastTemp;
 float lastTempF;
+float lastPercent;
 float lastHum;
 boolean metric = true; 
 MyMessage msgHum(CHILD_ID_HUM, V_HUM);
@@ -208,7 +210,6 @@ void printTemperature(DeviceAddress deviceAddress)
   Serial.print(" / ");
   Serial.print(WindowSize);
   Serial.print(" = ");
-  float outpercent = 100 * (Output / WindowSize);
   Serial.print(outpercent);
   Serial.print("% ");
   Serial.print(" nudge ");
@@ -232,6 +233,7 @@ void loop(void)
   float tempF = DallasTemperature::toFahrenheit(tempC);
   Input = tempF;
   myPID.Compute();
+  outpercent = 100 * (Output / WindowSize);
   if(Input > MyMaxPoint){
     heaterOn = 0;
     digitalWrite(heaterPin, HIGH);
@@ -305,6 +307,20 @@ void loop(void)
         #endif
       }
       
+
+      if (isnan(outpercent)) {
+        //  Serial.println("Failed reading outpercent from DHT");
+      } else if (outpercent != lastPercent) {
+        lastPercent = outpercent;
+        if (!metric) {
+          outpercent = dht.toFahrenheit(outpercent);
+        }
+        send(msgTemp3.set(outpercent, 1));
+        #ifdef MY_DEBUG
+       // Serial.print("T: ");
+       // Serial.println(outpercent);
+        #endif
+      }
       
       // Fetch humidity from DHT sensor
       float humidity = dht.getHumidity();
