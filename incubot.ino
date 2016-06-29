@@ -29,13 +29,15 @@
 #define CHILD_ID_HVAC  53
 
 // You might need to tune these for your setup
-unsigned long SLEEP_TIME = 200; // Sleep time between reads (in milliseconds)
+unsigned long SLEEP_TIME = 100; // Sleep time between reads (in milliseconds)
 const int sensorwatchdogLimit = 30;
 const unsigned long sensorInterval = 30000; // 30,000 ms = 30 seconds
 const int loopwatchdogLimit = 10;
-const unsigned long loopInterval = 1000; // 1,000 ms = 1 seconds
+const unsigned long loopInterval = 200; // 1,000 ms = 1 seconds
+const unsigned long serialInterval = 1000; // 1,000 ms = 1 seconds
 unsigned long WindowSize = 20000;
 unsigned long currentMillis;
+unsigned long previousMillis;
 float outpercent = 0;
 
 DHT dht;
@@ -95,6 +97,7 @@ int loopwatchdog = 0;
 
 bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
 
+//if ((unsigned long)(currentMillis - previousMillis) >= interval)
   if( millis() > throttle ) {
     // return one or 'ok'
     return 1;
@@ -255,10 +258,20 @@ void printTemperature(DeviceAddress deviceAddress)
 
 void loop(void)
 {
-
   wdt_reset();
+  currentMillis = millis();
+  if ((unsigned long)(currentMillis - serialPreviousMillis) >= 1000) {
+    secondPreviousMillis = currentMillis;
+    loopwatchdog++;
+    sensorwatchdog++;
+  }
+  if ((unsigned long)(currentMillis - serialPreviousMillis) >= serialInterval) {
+    serialPreviousMillis = currentMillis;
+    printTemperature(insideThermometer);// Use a simple function to print out the data
+
+  }
+
   if(checkThrottle( loopthrottle, loopwatchdog, loopwatchdogLimit)){
-    currentMillis = millis();
     loopthrottle = (currentMillis + loopInterval); 
     loopwatchdog = 0;
     // call sensors.requestTemperatures() to issue a global temperature 
@@ -267,7 +280,6 @@ void loop(void)
     sensors.requestTemperatures(); // Send the command to get temperatures
     //Serial.println("DONE");
     // It responds almost immediately. Let's print out the data
-    printTemperature(insideThermometer);// Use a simple function to print out the data
     tempF = DallasTemperature::toFahrenheit(tempC);
     Input = tempF;
     myPID.Compute();
@@ -316,6 +328,7 @@ void loop(void)
 
       sensorthrottle = (currentMillis + sensorInterval); 
       sensorwatchdog = 0;
+      previousMillis = currentMillis;
         // Fetch temperatures from DHT sensor
         temperature = dht.getTemperature();
         if (isnan(temperature)) {
@@ -378,12 +391,10 @@ void loop(void)
         }
     }
     
-    sensorwatchdog++;
     // sleep may not be a good idea with the relay involved
     //sleep(SLEEP_TIME); //sleep a bit
   }
-    loopwatchdog++;
-  delay(SLEEP_TIME); //sleep a bit
+//  delay(SLEEP_TIME); //sleep a bit
 }
 
 // function to print a device address
