@@ -110,12 +110,12 @@ bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
 
 void turnHeatOn(){
   digitalWrite(HEATER_PIN, LOW);
-  delay(300);
+  delay(100);
 }
 
 void turnHeatOff(){
   digitalWrite(HEATER_PIN, HIGH);
-  delay(300);
+  delay(100);
 }
 
 void setup(void)
@@ -312,20 +312,20 @@ void loop(void)
    
     //if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
     if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit)){
-      delay(200); //sleep a bit
+      //delay(200); //sleep a bit
 
       sensorthrottle = (currentMillis + sensorInterval); 
       sensorwatchdog = 0;
         // Fetch temperatures from DHT sensor
         temperature = dht.getTemperature();
         if (isnan(temperature)) {
-          //  Serial.println("Failed reading temperature from DHT");
+           Serial.println("Failed reading temperature from DHT");
         } else if (temperature != lastTemp) {
           lastTemp = temperature;
           if (!metric) {
-            //temperature = dht.toFahrenheit(temperature);
+          //  temperature = dht.toFahrenheit(temperature);
           }
-          send(msgTemp.set(temperature, 1));
+  //        send(msgTemp.set(temperature, 1));
           #ifdef MY_DEBUG
           Serial.print("T: ");
           Serial.println(temperature);
@@ -339,8 +339,8 @@ void loop(void)
           if (!metric) {
             //tempF = dht.toFahrenheit(tempF);
           }
-          delay(200); //sleep a bit
-          send(msgTemp2.set(tempF, 1));
+          //delay(200); //sleep a bit
+ //         send(msgTemp2.set(tempF, 1));
           #ifdef MY_DEBUG
           Serial.print(" T2: ");
           Serial.println(tempF);
@@ -355,7 +355,7 @@ void loop(void)
           if (!metric) {
   //          outpercent = dht.toFahrenheit(outpercent);
           }
-          delay(200); //sleep a bit
+          //delay(200); //sleep a bit
 //          send(msgTemp3.set(outpercent, 1));
           #ifdef MY_DEBUG
           Serial.print(" T3: ");
@@ -369,8 +369,8 @@ void loop(void)
             //Serial.println("Failed reading humidity from DHT");
         } else if (humidity != lastHum) {
             lastHum = humidity;
-            delay(200); //sleep a bit
-            send(msgHum.set(humidity, 1));
+            //delay(200); //sleep a bit
+            //send(msgHum.set(humidity, 1));
             #ifdef MY_DEBUG
             Serial.print(" H: ");
             Serial.println(humidity);
