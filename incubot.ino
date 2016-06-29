@@ -121,18 +121,23 @@ void turnHeatOff(){
 void setup(void)
 {
   wdt_enable(WDTO_8S);
+  currentMillis = millis();
   dht.setup(HUMIDITY_SENSOR_DIGITAL_PIN);
   pinMode(HEATER_PIN, OUTPUT);
   digitalWrite(HEATER_PIN, HIGH);
 
   metric = getConfig().isMetric;
   // start serial port
-  Serial.begin(115200);
+  //Serial.begin(115200);
   Serial.println("Dallas Temperature IC Control Library Demo");
 
   // locate devices on the bus
   //Serial.print("Locating devices...");
   sensors.begin();
+  loopthrottle = (currentMillis + loopInterval); 
+  loopwatchdog = 0;
+  sensorthrottle = (currentMillis + sensorInterval); 
+  sensorwatchdog = 0;
   //Serial.print("Found ");
   //Serial.print(sensors.getDeviceCount(), DEC);
   //Serial.println(" devices.");
@@ -253,9 +258,9 @@ void loop(void)
 
   wdt_reset();
   if(checkThrottle( loopthrottle, loopwatchdog, loopwatchdogLimit)){
-      loopthrottle = (currentMillis + loopInterval); 
-      loopwatchdog = 0;
     currentMillis = millis();
+    loopthrottle = (currentMillis + loopInterval); 
+    loopwatchdog = 0;
     // call sensors.requestTemperatures() to issue a global temperature 
     // request to all devices on the bus
     //Serial.print("Requesting temperatures...");
@@ -351,7 +356,7 @@ void loop(void)
   //          outpercent = dht.toFahrenheit(outpercent);
           }
           delay(200); //sleep a bit
-          send(msgTemp3.set(outpercent, 1));
+//          send(msgTemp3.set(outpercent, 1));
           #ifdef MY_DEBUG
           Serial.print(" T3: ");
           Serial.println(outpercent);
