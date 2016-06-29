@@ -38,6 +38,8 @@ const unsigned long serialInterval = 1000; // 1,000 ms = 1 seconds
 unsigned long WindowSize = 20000;
 unsigned long currentMillis;
 unsigned long previousMillis;
+unsigned long serialPreviousMillis;
+unsigned long secondPreviousMillis;
 float outpercent = 0;
 
 DHT dht;
@@ -83,7 +85,6 @@ PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 unsigned long windowStartTime;
 
-unsigned long previousMillis = 0;        // will store last time LED was updated
 unsigned long nudge = 0;
 unsigned long yank = 0;
 
@@ -260,7 +261,7 @@ void loop(void)
 {
   wdt_reset();
   currentMillis = millis();
-  if ((unsigned long)(currentMillis - serialPreviousMillis) >= 1000) {
+  if ((unsigned long)(currentMillis - secondPreviousMillis) >= 1000) {
     secondPreviousMillis = currentMillis;
     loopwatchdog++;
     sensorwatchdog++;
@@ -328,7 +329,6 @@ void loop(void)
 
       sensorthrottle = (currentMillis + sensorInterval); 
       sensorwatchdog = 0;
-      previousMillis = currentMillis;
         // Fetch temperatures from DHT sensor
         temperature = dht.getTemperature();
         if (isnan(temperature)) {
