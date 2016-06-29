@@ -1,5 +1,5 @@
 // Enable debug prints
-//#define MY_DEBUG
+// #define MY_DEBUG
 
 // Enable and select radio type attached
 #define MY_RADIO_NRF24
@@ -12,6 +12,7 @@
 #include <SPI.h>
 #include <MySensors.h>
 #include <DHT.h>
+#include <avr/wdt.h>
 
 // Define Pins here
 // Data wire is plugged into port 2 on the Arduino
@@ -101,6 +102,7 @@ bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
 
 void setup(void)
 {
+  wdt_enable(WDTO_8S);
   dht.setup(HUMIDITY_SENSOR_DIGITAL_PIN);
   pinMode(HEATER_PIN, OUTPUT);
 
@@ -215,8 +217,14 @@ void printTemperature(DeviceAddress deviceAddress)
   Serial.print("% ");
   Serial.print(" nudge ");
   Serial.print(nudge);
+  Serial.print(" millis  ");
+  Serial.print( millis() );
+  Serial.print(" sensorthrottle  ");
+  Serial.print( sensorthrottle );
   Serial.print(" countdown  ");
   Serial.print( millis() - windowStartTime - Output );
+  Serial.print(" watchdog  ");
+  Serial.print( sensorwatchdog );
   Serial.print(" Temp F: ");
   Serial.println(DallasTemperature::toFahrenheit(tempC)); // Converts tempC to Fahrenheit
 }
@@ -224,6 +232,7 @@ void printTemperature(DeviceAddress deviceAddress)
 void loop(void)
 {
 
+  wdt_reset();
   // call sensors.requestTemperatures() to issue a global temperature 
   // request to all devices on the bus
   //Serial.print("Requesting temperatures...");
@@ -272,7 +281,7 @@ void loop(void)
   }
 
   }
-  delay(dht.getMinimumSamplingPeriod());
+  //delay(dht.getMinimumSamplingPeriod());
  
  // if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit )){
   if(sensorwatchdog > 30){
@@ -300,7 +309,7 @@ void loop(void)
       } else if (tempF != lastTempF) {
         lastTempF = tempF;
         if (!metric) {
-          tempF = dht.toFahrenheit(tempF);
+          //tempF = dht.toFahrenheit(tempF);
         }
         send(msgTemp2.set(tempF, 1));
         #ifdef MY_DEBUG
