@@ -30,7 +30,7 @@
 // You might need to tune these for your setup
 unsigned long SLEEP_TIME = 1000; // Sleep time between reads (in milliseconds)
 const int sensorwatchdogLimit = 30;
-const int sensorInterval = 30000; // 30,000 ms = 30 seconds
+const unsigned long sensorInterval = 30000; // 30,000 ms = 30 seconds
 unsigned long WindowSize = 20000;
 float outpercent = 0;
 
@@ -105,6 +105,7 @@ void setup(void)
   wdt_enable(WDTO_8S);
   dht.setup(HUMIDITY_SENSOR_DIGITAL_PIN);
   pinMode(HEATER_PIN, OUTPUT);
+  digitalWrite(HEATER_PIN, HIGH);
 
   metric = getConfig().isMetric;
   // start serial port
@@ -323,7 +324,7 @@ void loop(void)
       } else if (outpercent != lastPercent) {
         lastPercent = outpercent;
         if (!metric) {
-          outpercent = dht.toFahrenheit(outpercent);
+//          outpercent = dht.toFahrenheit(outpercent);
         }
         send(msgTemp3.set(outpercent, 1));
         #ifdef MY_DEBUG
