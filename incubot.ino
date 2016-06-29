@@ -29,8 +29,8 @@
 
 // You might need to tune these for your setup
 unsigned long SLEEP_TIME = 1000; // Sleep time between reads (in milliseconds)
-const int sensorwatchdogLimit = 20;
-const int sensorInterval = 5000; // 5,000 ms = 5 seconds
+const int sensorwatchdogLimit = 30;
+const int sensorInterval = 30000; // 30,000 ms = 30 seconds
 unsigned long WindowSize = 20000;
 float outpercent = 0;
 
@@ -283,8 +283,7 @@ void loop(void)
   }
   //delay(dht.getMinimumSamplingPeriod());
  
- // if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit )){
-  if(sensorwatchdog > 30){
+  if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
 
     sensorthrottle = (millis() + sensorInterval); 
     sensorwatchdog = 0;
