@@ -1,5 +1,5 @@
 // Enable debug prints
-// #define MY_DEBUG
+#define MY_DEBUG
 
 // Enable and select radio type attached
 #define MY_RADIO_NRF24
@@ -99,6 +99,15 @@ bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
   }
 }
 
+void turnHeatOn(){
+  digitalWrite(HEATER_PIN, LOW);
+  delay(100);
+}
+
+void turnHeatOff(){
+  digitalWrite(HEATER_PIN, HIGH);
+  delay(100);
+}
 
 void setup(void)
 {
@@ -248,18 +257,19 @@ void loop(void)
   outpercent = 100 * (Output / WindowSize);
   if(Input > MyMaxPoint){
     heaterOn = 0;
-    digitalWrite(HEATER_PIN, HIGH);
+    turnHeatOff();
   }
   // ignore negative
   if( Input > 0){
     if( Input < MySetPoint){
       heaterOn = 1;
       //digitalWrite(HEATER_PIN, LOW);
+      //turnHeatOn();
     }
     if( Input < MyMinPoint){
       heaterOn = 0;
       heaterState = 1;
-      digitalWrite(HEATER_PIN, LOW);
+      turnHeatOn();
     }
   }
 
@@ -273,17 +283,19 @@ void loop(void)
      * turn the output pin on/off based on pid output
      ************************************************/
     if (Output < (currentMillis - windowStartTime)) {
-      digitalWrite(HEATER_PIN, HIGH);
+      turnHeatOff();
       heaterState = 0;
     }
     else {
-      digitalWrite(HEATER_PIN, LOW);
+      turnHeatOn();
       heaterState = 1;
     }
   }
   //delay(dht.getMinimumSamplingPeriod());
  
-  if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
+  //if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
+  if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit)){
+    delay(200); //sleep a bit
 
     sensorthrottle = (currentMillis + sensorInterval); 
     sensorwatchdog = 0;
@@ -294,12 +306,12 @@ void loop(void)
       } else if (temperature != lastTemp) {
         lastTemp = temperature;
         if (!metric) {
-          temperature = dht.toFahrenheit(temperature);
+          //temperature = dht.toFahrenheit(temperature);
         }
         send(msgTemp.set(temperature, 1));
         #ifdef MY_DEBUG
-      //  Serial.print("T: ");
-       // Serial.println(temperature);
+        Serial.print("T: ");
+        Serial.println(temperature);
         #endif
       }
 
@@ -310,10 +322,11 @@ void loop(void)
         if (!metric) {
           //tempF = dht.toFahrenheit(tempF);
         }
+        delay(100); //sleep a bit
         send(msgTemp2.set(tempF, 1));
         #ifdef MY_DEBUG
-      //  Serial.print("T: ");
-       // Serial.println(tempF);
+        Serial.print(" T2: ");
+        Serial.println(tempF);
         #endif
       }
       
@@ -325,22 +338,24 @@ void loop(void)
         if (!metric) {
 //          outpercent = dht.toFahrenheit(outpercent);
         }
+        delay(100); //sleep a bit
         send(msgTemp3.set(outpercent, 1));
         #ifdef MY_DEBUG
-       // Serial.print("T: ");
-       // Serial.println(outpercent);
+        Serial.print(" T3: ");
+        Serial.println(outpercent);
         #endif
       }
       
       // Fetch humidity from DHT sensor
       float humidity = dht.getHumidity();
       if (isnan(humidity)) {
-          Serial.println("Failed reading humidity from DHT");
+          //Serial.println("Failed reading humidity from DHT");
       } else if (humidity != lastHum) {
           lastHum = humidity;
+          delay(100); //sleep a bit
           send(msgHum.set(humidity, 1));
           #ifdef MY_DEBUG
-          Serial.print("H: ");
+          Serial.print(" H: ");
           Serial.println(humidity);
           #endif
       }
