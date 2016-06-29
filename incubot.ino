@@ -16,6 +16,7 @@
 
 // Define Pins here
 // Data wire is plugged into port 2 on the Arduino
+#define MY_RF24_PA_LEVEL RF24_PA_LOW
 #define ONE_WIRE_BUS 3
 #define HUMIDITY_SENSOR_DIGITAL_PIN 2
 // constants won't change. Used here to set a pin number :
@@ -101,12 +102,12 @@ bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
 
 void turnHeatOn(){
   digitalWrite(HEATER_PIN, LOW);
-  delay(100);
+  delay(300);
 }
 
 void turnHeatOff(){
   digitalWrite(HEATER_PIN, HIGH);
-  delay(100);
+  delay(300);
 }
 
 void setup(void)
@@ -322,7 +323,7 @@ void loop(void)
         if (!metric) {
           //tempF = dht.toFahrenheit(tempF);
         }
-        delay(100); //sleep a bit
+        delay(200); //sleep a bit
         send(msgTemp2.set(tempF, 1));
         #ifdef MY_DEBUG
         Serial.print(" T2: ");
@@ -338,7 +339,7 @@ void loop(void)
         if (!metric) {
 //          outpercent = dht.toFahrenheit(outpercent);
         }
-        delay(100); //sleep a bit
+        delay(200); //sleep a bit
         send(msgTemp3.set(outpercent, 1));
         #ifdef MY_DEBUG
         Serial.print(" T3: ");
@@ -352,7 +353,7 @@ void loop(void)
           //Serial.println("Failed reading humidity from DHT");
       } else if (humidity != lastHum) {
           lastHum = humidity;
-          delay(100); //sleep a bit
+          delay(200); //sleep a bit
           send(msgHum.set(humidity, 1));
           #ifdef MY_DEBUG
           Serial.print(" H: ");
