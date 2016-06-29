@@ -68,8 +68,8 @@ DallasTemperature sensors(&oneWire);
 DeviceAddress insideThermometer;
 
 // Variables will change :
-int heaterState = LOW;
-int heaterOn = 0;
+bool heaterState = 0;
+bool heaterOn = 0;
 
 double MyMaxPoint = 101.00;
 double MySetPoint = 100.30;
@@ -113,11 +113,13 @@ bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
 }
 
 void turnHeatOn(){
+  heaterState = 1;
   digitalWrite(HEATER_PIN, LOW);
   delay(100);
 }
 
 void turnHeatOff(){
+  heaterState = 0;
   digitalWrite(HEATER_PIN, HIGH);
   delay(100);
 }
@@ -298,7 +300,6 @@ void loop(void)
       }
       if( Input < MyMinPoint){
         heaterOn = 0;
-        heaterState = 1;
         turnHeatOn();
       }
     }
@@ -314,11 +315,9 @@ void loop(void)
        ************************************************/
       if (Output < (currentMillis - windowStartTime)) {
         turnHeatOff();
-        heaterState = 0;
       }
       else {
         turnHeatOn();
-        heaterState = 1;
       }
     }
     //delay(dht.getMinimumSamplingPeriod());
