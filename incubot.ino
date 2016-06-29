@@ -222,8 +222,8 @@ void printTemperature(DeviceAddress deviceAddress)
   Serial.print( millis() );
   Serial.print(" sensorthrottle  ");
   Serial.print( sensorthrottle );
-  Serial.print(" countdown  ");
-  Serial.print( millis() - windowStartTime - Output );
+  //Serial.print(" countdown  ");
+  //Serial.print( millis() - windowStartTime - Output );
   Serial.print(" watchdog  ");
   Serial.print( sensorwatchdog );
   Serial.print(" Temp F: ");
@@ -234,6 +234,7 @@ void loop(void)
 {
 
   wdt_reset();
+  unsigned long currentMillis = millis();
   // call sensors.requestTemperatures() to issue a global temperature 
   // request to all devices on the bus
   //Serial.print("Requesting temperatures...");
@@ -261,32 +262,30 @@ void loop(void)
       digitalWrite(HEATER_PIN, LOW);
     }
   }
-    unsigned long currentMillis = millis();
-  if (heaterOn){
 
-
-   /************************************************
-   * turn the output pin on/off based on pid output
-   ************************************************/
-  if (millis() - windowStartTime > WindowSize)
+  if ((currentMillis - windowStartTime) > WindowSize)
   { //time to shift the Relay Window
     windowStartTime += WindowSize;
   }
-  if (Output < millis() - windowStartTime) {
-    digitalWrite(HEATER_PIN, HIGH);
-    heaterState = 0;
-  }
-  else {
-    digitalWrite(HEATER_PIN, LOW);
-    heaterState = 1;
-  }
 
+  if (heaterOn){
+     /************************************************
+     * turn the output pin on/off based on pid output
+     ************************************************/
+    if (Output < (currentMillis - windowStartTime)) {
+      digitalWrite(HEATER_PIN, HIGH);
+      heaterState = 0;
+    }
+    else {
+      digitalWrite(HEATER_PIN, LOW);
+      heaterState = 1;
+    }
   }
   //delay(dht.getMinimumSamplingPeriod());
  
   if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
 
-    sensorthrottle = (millis() + sensorInterval); 
+    sensorthrottle = (currentMillis + sensorInterval); 
     sensorwatchdog = 0;
       // Fetch temperatures from DHT sensor
       float temperature = dht.getTemperature();
