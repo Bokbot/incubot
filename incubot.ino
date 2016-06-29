@@ -29,17 +29,23 @@
 #define CHILD_ID_HVAC  53
 
 // You might need to tune these for your setup
-unsigned long SLEEP_TIME = 1000; // Sleep time between reads (in milliseconds)
+unsigned long SLEEP_TIME = 200; // Sleep time between reads (in milliseconds)
 const int sensorwatchdogLimit = 30;
 const unsigned long sensorInterval = 30000; // 30,000 ms = 30 seconds
+const int loopwatchdogLimit = 10;
+const unsigned long loopInterval = 1000; // 1,000 ms = 1 seconds
 unsigned long WindowSize = 20000;
+unsigned long currentMillis;
 float outpercent = 0;
 
 DHT dht;
 float lastTemp;
 float lastTempF;
+float tempF;
 float lastPercent;
 float lastHum;
+float humidity;
+float temperature;
 boolean metric = true; 
 MyMessage msgHum(CHILD_ID_HUM, V_HUM);
 MyMessage msgTemp(CHILD_ID_TEMP, V_TEMP);
@@ -83,7 +89,9 @@ unsigned long yank = 0;
 float tempC;
 
 unsigned long sensorthrottle = 1000;
+unsigned long loopthrottle = 1000;
 int sensorwatchdog = 0;
+int loopwatchdog = 0;
 
 bool checkThrottle(unsigned long throttle, int dog, int watchdogLimit){
 
@@ -244,127 +252,132 @@ void loop(void)
 {
 
   wdt_reset();
-  unsigned long currentMillis = millis();
-  // call sensors.requestTemperatures() to issue a global temperature 
-  // request to all devices on the bus
-  //Serial.print("Requesting temperatures...");
-  sensors.requestTemperatures(); // Send the command to get temperatures
-  //Serial.println("DONE");
-  // It responds almost immediately. Let's print out the data
-  printTemperature(insideThermometer);// Use a simple function to print out the data
-  float tempF = DallasTemperature::toFahrenheit(tempC);
-  Input = tempF;
-  myPID.Compute();
-  outpercent = 100 * (Output / WindowSize);
-  if(Input > MyMaxPoint){
-    heaterOn = 0;
-    turnHeatOff();
-  }
-  // ignore negative
-  if( Input > 0){
-    if( Input < MySetPoint){
-      heaterOn = 1;
-      //digitalWrite(HEATER_PIN, LOW);
-      //turnHeatOn();
-    }
-    if( Input < MyMinPoint){
+  if(checkThrottle( loopthrottle, loopwatchdog, loopwatchdogLimit)){
+      loopthrottle = (currentMillis + loopInterval); 
+      loopwatchdog = 0;
+    currentMillis = millis();
+    // call sensors.requestTemperatures() to issue a global temperature 
+    // request to all devices on the bus
+    //Serial.print("Requesting temperatures...");
+    sensors.requestTemperatures(); // Send the command to get temperatures
+    //Serial.println("DONE");
+    // It responds almost immediately. Let's print out the data
+    printTemperature(insideThermometer);// Use a simple function to print out the data
+    tempF = DallasTemperature::toFahrenheit(tempC);
+    Input = tempF;
+    myPID.Compute();
+    outpercent = 100 * (Output / WindowSize);
+    if(Input > MyMaxPoint){
       heaterOn = 0;
-      heaterState = 1;
-      turnHeatOn();
-    }
-  }
-
-  if ((currentMillis - windowStartTime) > WindowSize)
-  { //time to shift the Relay Window
-    windowStartTime += WindowSize;
-  }
-
-  if (heaterOn){
-     /************************************************
-     * turn the output pin on/off based on pid output
-     ************************************************/
-    if (Output < (currentMillis - windowStartTime)) {
       turnHeatOff();
-      heaterState = 0;
     }
-    else {
-      turnHeatOn();
-      heaterState = 1;
+    // ignore negative
+    if( Input > 0){
+      if( Input < MySetPoint){
+        heaterOn = 1;
+        //digitalWrite(HEATER_PIN, LOW);
+        //turnHeatOn();
+      }
+      if( Input < MyMinPoint){
+        heaterOn = 0;
+        heaterState = 1;
+        turnHeatOn();
+      }
     }
-  }
-  //delay(dht.getMinimumSamplingPeriod());
- 
-  //if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
-  if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit)){
-    delay(200); //sleep a bit
 
-    sensorthrottle = (currentMillis + sensorInterval); 
-    sensorwatchdog = 0;
-      // Fetch temperatures from DHT sensor
-      float temperature = dht.getTemperature();
-      if (isnan(temperature)) {
-        //  Serial.println("Failed reading temperature from DHT");
-      } else if (temperature != lastTemp) {
-        lastTemp = temperature;
-        if (!metric) {
-          //temperature = dht.toFahrenheit(temperature);
-        }
-        send(msgTemp.set(temperature, 1));
-        #ifdef MY_DEBUG
-        Serial.print("T: ");
-        Serial.println(temperature);
-        #endif
-      }
+    if ((currentMillis - windowStartTime) > WindowSize)
+    { //time to shift the Relay Window
+      windowStartTime += WindowSize;
+    }
 
-      if (isnan(tempF)) {
-        //  Serial.println("Failed reading tempF from DHT");
-      } else if (tempF != lastTempF) {
-        lastTempF = tempF;
-        if (!metric) {
-          //tempF = dht.toFahrenheit(tempF);
-        }
-        delay(200); //sleep a bit
-        send(msgTemp2.set(tempF, 1));
-        #ifdef MY_DEBUG
-        Serial.print(" T2: ");
-        Serial.println(tempF);
-        #endif
+    if (heaterOn){
+       /************************************************
+       * turn the output pin on/off based on pid output
+       ************************************************/
+      if (Output < (currentMillis - windowStartTime)) {
+        turnHeatOff();
+        heaterState = 0;
       }
-      
+      else {
+        turnHeatOn();
+        heaterState = 1;
+      }
+    }
+    //delay(dht.getMinimumSamplingPeriod());
+   
+    //if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
+    if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit)){
+      delay(200); //sleep a bit
 
-      if (isnan(outpercent)) {
-        //  Serial.println("Failed reading outpercent from DHT");
-      } else if (outpercent != lastPercent) {
-        lastPercent = outpercent;
-        if (!metric) {
-//          outpercent = dht.toFahrenheit(outpercent);
-        }
-        delay(200); //sleep a bit
-        send(msgTemp3.set(outpercent, 1));
-        #ifdef MY_DEBUG
-        Serial.print(" T3: ");
-        Serial.println(outpercent);
-        #endif
-      }
-      
-      // Fetch humidity from DHT sensor
-      float humidity = dht.getHumidity();
-      if (isnan(humidity)) {
-          //Serial.println("Failed reading humidity from DHT");
-      } else if (humidity != lastHum) {
-          lastHum = humidity;
-          delay(200); //sleep a bit
-          send(msgHum.set(humidity, 1));
+      sensorthrottle = (currentMillis + sensorInterval); 
+      sensorwatchdog = 0;
+        // Fetch temperatures from DHT sensor
+        temperature = dht.getTemperature();
+        if (isnan(temperature)) {
+          //  Serial.println("Failed reading temperature from DHT");
+        } else if (temperature != lastTemp) {
+          lastTemp = temperature;
+          if (!metric) {
+            //temperature = dht.toFahrenheit(temperature);
+          }
+          send(msgTemp.set(temperature, 1));
           #ifdef MY_DEBUG
-          Serial.print(" H: ");
-          Serial.println(humidity);
+          Serial.print("T: ");
+          Serial.println(temperature);
           #endif
-      }
+        }
+
+        if (isnan(tempF)) {
+          //  Serial.println("Failed reading tempF from DHT");
+        } else if (tempF != lastTempF) {
+          lastTempF = tempF;
+          if (!metric) {
+            //tempF = dht.toFahrenheit(tempF);
+          }
+          delay(200); //sleep a bit
+          send(msgTemp2.set(tempF, 1));
+          #ifdef MY_DEBUG
+          Serial.print(" T2: ");
+          Serial.println(tempF);
+          #endif
+        }
+        
+
+        if (isnan(outpercent)) {
+          //  Serial.println("Failed reading outpercent from DHT");
+        } else if (outpercent != lastPercent) {
+          lastPercent = outpercent;
+          if (!metric) {
+  //          outpercent = dht.toFahrenheit(outpercent);
+          }
+          delay(200); //sleep a bit
+          send(msgTemp3.set(outpercent, 1));
+          #ifdef MY_DEBUG
+          Serial.print(" T3: ");
+          Serial.println(outpercent);
+          #endif
+        }
+        
+        // Fetch humidity from DHT sensor
+        humidity = dht.getHumidity();
+        if (isnan(humidity)) {
+            //Serial.println("Failed reading humidity from DHT");
+        } else if (humidity != lastHum) {
+            lastHum = humidity;
+            delay(200); //sleep a bit
+            send(msgHum.set(humidity, 1));
+            #ifdef MY_DEBUG
+            Serial.print(" H: ");
+            Serial.println(humidity);
+            #endif
+        }
+    }
+    
+    sensorwatchdog++;
+    // sleep may not be a good idea with the relay involved
+    //sleep(SLEEP_TIME); //sleep a bit
   }
-  
-  sensorwatchdog++;
-  // sleep may not be a good idea with the relay involved
-  //sleep(SLEEP_TIME); //sleep a bit
+    loopwatchdog++;
   delay(SLEEP_TIME); //sleep a bit
 }
 
