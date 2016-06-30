@@ -324,7 +324,7 @@ void loop(void)
    
     //if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit) || sensorwatchdog > 45){
     if(checkThrottle( sensorthrottle, sensorwatchdog, sensorwatchdogLimit)){
-      //delay(200); //sleep a bit
+      delay(200); //sleep a bit
 
       sensorthrottle = (currentMillis + sensorInterval); 
       sensorwatchdog = 0;
@@ -351,7 +351,7 @@ void loop(void)
           if (!metric) {
             //tempF = dht.toFahrenheit(tempF);
           }
-          //delay(200); //sleep a bit
+          delay(200); //sleep a bit
           send(msgTemp2.set(tempF, 1));
           #ifdef MY_DEBUG
           Serial.print(" T2: ");
@@ -368,7 +368,7 @@ void loop(void)
   //          outpercent = dht.toFahrenheit(outpercent);
           }
           //delay(200); //sleep a bit
-          send(msgTemp3.set(outpercent, 1));
+          //send(msgTemp3.set(outpercent, 1));
           #ifdef MY_DEBUG
           Serial.print(" T3: ");
           Serial.println(outpercent);
@@ -381,7 +381,7 @@ void loop(void)
             //Serial.println("Failed reading humidity from DHT");
         } else if (humidity != lastHum) {
             lastHum = humidity;
-            //delay(200); //sleep a bit
+            delay(200); //sleep a bit
             send(msgHum.set(humidity, 1));
             #ifdef MY_DEBUG
             Serial.print(" H: ");
