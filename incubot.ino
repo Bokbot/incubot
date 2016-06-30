@@ -337,7 +337,7 @@ void loop(void)
           if (!metric) {
           //  temperature = dht.toFahrenheit(temperature);
           }
-          send(msgTemp.set(temperature, 1));
+     //     send(msgTemp.set(temperature, 1));
           #ifdef MY_DEBUG
           Serial.print("T: ");
           Serial.println(temperature);
@@ -352,7 +352,7 @@ void loop(void)
             //tempF = dht.toFahrenheit(tempF);
           }
           delay(200); //sleep a bit
-          send(msgTemp2.set(tempF, 1));
+    //      send(msgTemp2.set(tempF, 1));
           #ifdef MY_DEBUG
           Serial.print(" T2: ");
           Serial.println(tempF);
@@ -382,7 +382,7 @@ void loop(void)
         } else if (humidity != lastHum) {
             lastHum = humidity;
             delay(200); //sleep a bit
-            send(msgHum.set(humidity, 1));
+   //         send(msgHum.set(humidity, 1));
             #ifdef MY_DEBUG
             Serial.print(" H: ");
             Serial.println(humidity);
