@@ -51,10 +51,10 @@ float lastHum;
 float humidity;
 float temperature;
 boolean metric = true; 
-MyMessage msgHum(CHILD_ID_HUM, V_HUM);
-MyMessage msgTemp(CHILD_ID_TEMP, V_TEMP);
-MyMessage msgTemp2(CHILD_ID_TEMP2, V_TEMP);
-MyMessage msgTemp3(CHILD_ID_TEMP3, V_TEMP);
+//MyMessage msgHum(CHILD_ID_HUM, V_HUM);
+//MyMessage msgTemp(CHILD_ID_TEMP, V_TEMP);
+//MyMessage msgTemp2(CHILD_ID_TEMP2, V_TEMP);
+//MyMessage msgTemp3(CHILD_ID_TEMP3, V_TEMP);
 // hvac for incubot needs work still
 //MyMessage msgHVAC(CHILD_ID_HVAC, V_TEMP);
 
@@ -132,7 +132,7 @@ void setup(void)
   pinMode(HEATER_PIN, OUTPUT);
   digitalWrite(HEATER_PIN, HIGH);
 
-  metric = getConfig().isMetric;
+  //metric = getConfig().isMetric;
   // start serial port
   //Serial.begin(115200);
   Serial.println("Dallas Temperature IC Control Library Demo");
