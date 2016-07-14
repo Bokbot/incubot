@@ -10,7 +10,7 @@
 #include <DallasTemperature.h>
 
 #include <SPI.h>
-#include <MySensors.h>
+//#include <MySensors.h>
 #include <DHT.h>
 #include <avr/wdt.h>
 
@@ -204,14 +204,14 @@ void setup(void)
 void presentation()
 {
   // Send the Sketch Version Information to the Gateway
-  sendSketchInfo("Incubot", "0.1");
+  //sendSketchInfo("Incubot", "0.1");
 
   // Register all sensors to gw (they will be created as child devices)
-  present(CHILD_ID_HUM, S_HUM);
-  present(CHILD_ID_TEMP, S_TEMP);
-  present(CHILD_ID_TEMP2, S_TEMP);
-  present(CHILD_ID_TEMP3, S_TEMP);
-  present(CHILD_ID_HVAC, S_HVAC);
+  //present(CHILD_ID_HUM, S_HUM);
+  //present(CHILD_ID_TEMP, S_TEMP);
+  //present(CHILD_ID_TEMP2, S_TEMP);
+  //present(CHILD_ID_TEMP3, S_TEMP);
+  //present(CHILD_ID_HVAC, S_HVAC);
 }
 
 // function to print the temperature for a device
