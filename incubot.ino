@@ -134,7 +134,7 @@ void setup(void)
 
   //metric = getConfig().isMetric;
   // start serial port
-  //Serial.begin(115200);
+  Serial.begin(115200);
   Serial.println("Dallas Temperature IC Control Library Demo");
 
   // locate devices on the bus
